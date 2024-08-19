@@ -11,8 +11,8 @@ K = np.array([
 ])
 
 cube = Mesh()
-# cube.load('teapot.obj')
-cube.load('cube.obj')
+cube.load('teapot.obj')
+# cube.load('cube.obj')
 cube.set_world_orientation([0, np.pi, 0])
 
 camera = Camera(K)
