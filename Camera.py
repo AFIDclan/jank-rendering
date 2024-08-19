@@ -20,24 +20,29 @@ class Camera:
     def render(self, scene):
         img = np.zeros((self.K[1][2]*2, self.K[0][2]*2, 3), dtype=np.uint8)
 
-        vert_world = scene.vertices
+        vert_world = scene.world_vertices
+        normals_world = scene.world_normals
         vert_pixel_z = np.array([ self.vertex_to_pixel(v) for v in vert_world ])
 
-        # sort faces by average z-depth
-        scene.faces = sorted(scene.faces, key=lambda face: np.mean([vert_pixel_z[i][2] for i in face]), reverse=True)
-
+        # Create a list of face indices sorted by depth
+        face_depths = [-np.mean(vert_pixel_z[face][:, 2]) for face in scene.faces]
+        sorted_faces = np.argsort(face_depths)
         
-        for face in scene.faces:
+        for i in sorted_faces:
+
+            face = scene.faces[i]
+            normal = normals_world[i]
+
             pts = np.array([vert_pixel_z[i][:2] for i in face], np.int32)
             pts = pts.reshape((-1, 1, 2))
-
-            normal = np.cross(vert_world[face[1]] - vert_world[face[0]], vert_world[face[2]] - vert_world[face[0]])
-            normal /= np.linalg.norm(normal)
 
             vec_vert_to_camera = vert_world[face[0]] - self.pose_lre[:3]
             vec_vert_to_camera /= np.linalg.norm(vec_vert_to_camera)
             
-            alignment = abs(np.dot(normal, vec_vert_to_camera))
+            alignment = np.dot(normal, vec_vert_to_camera)
+
+            if alignment < 0:
+                continue
 
             brightness = 255 * alignment
 
