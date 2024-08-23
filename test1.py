@@ -11,15 +11,15 @@ K = np.array([
 ])
 
 cube = Mesh()
-# cube.load('teapot.obj')
+cube.load('teapot.obj')
 # cube.load('cow.obj')
-cube.load('cube.obj')
+# cube.load('cube.obj')
 
 cube.set_world_orientation([0, np.pi, 0])
 
 camera = Camera(K)
 
-# camera.set_world_position([0, -4, -7])
+camera.set_world_position([0, -4, -7])
 
 tracker = MouseDragTracker()
 cv2.namedWindow('image')

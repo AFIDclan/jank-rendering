@@ -76,4 +76,9 @@ class Mesh:
     def _generate_world(self):
         self.world_vertices = np.array([(self.H_local2world @ np.array([*v, 1]))[:3] for v in self._vertices])
         self.world_normals = [self.H_local2world[:3, :3] @ n for n in self._normals]
-        self.world_face_bounding_boxes = np.array([(self.H_local2world @ np.array([*v, 1]))[:3] for v in self.face_bounding_boxes])
+        self.world_bounding_box = np.array([
+            [min(self.world_vertices[:, 0]), max(self.world_vertices[:, 0])],
+            [min(self.world_vertices[:, 1]), max(self.world_vertices[:, 1])],
+            [min(self.world_vertices[:, 2]), max(self.world_vertices[:, 2])]
+        ])
+        # self.world_face_bounding_boxes = np.array([(self.H_local2world @ np.array([*v, 1]))[:3] for v in self._face_bounding_boxes])
