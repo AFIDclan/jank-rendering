@@ -1,5 +1,6 @@
 import numpy as np
 import robotransforms.euclidean as t
+import cv2
 
 class Mesh:
     def __init__(self):
@@ -21,6 +22,7 @@ class Mesh:
 
             if self.faces:
                 if '/' in self.faces[0][0]:  # vertex/texture/normal format
+                    self.texture_coords = [[int(v.split('/')[1]) - 1 for v in face] for face in self.faces]
                     self.faces = [[int(v.split('/')[0]) - 1 for v in face] for face in self.faces]
                 else:
                     self.faces = [[int(v) - 1 for v in face] for face in self.faces]
@@ -32,10 +34,20 @@ class Mesh:
 
         # Compute normals
         self._normals = []
+        self._face_bounding_boxes = []
+
         for face in self.faces:
             v0 = self._vertices[face[0]]
             v1 = self._vertices[face[1]]
             v2 = self._vertices[face[2]]
+
+            face_bounding_box = np.array([
+                [min(v0[0], v1[0], v2[0]), max(v0[0], v1[0], v2[0])],
+                [min(v0[1], v1[1], v2[1]), max(v0[1], v1[1], v2[1])],
+                [min(v0[2], v1[2], v2[2]), max(v0[2], v1[2], v2[2])]
+            ])
+            self._face_bounding_boxes.append(face_bounding_box)
+            
 
             normal = np.cross(v2 - v0, v1 - v0)
             normal /= np.linalg.norm(normal)
@@ -44,6 +56,9 @@ class Mesh:
 
         self._normals = np.array(self._normals)
         self.world_normals = self._normals
+
+        self._face_bounding_boxes = np.array(self._face_bounding_boxes)
+        self.world_face_bounding_boxes = self._face_bounding_boxes
 
             
 
@@ -59,5 +74,6 @@ class Mesh:
         self._generate_world() # Update world vertices and normals
 
     def _generate_world(self):
-        self.world_vertices = [(self.H_local2world @ np.array([*v, 1]))[:3] for v in self._vertices]
+        self.world_vertices = np.array([(self.H_local2world @ np.array([*v, 1]))[:3] for v in self._vertices])
         self.world_normals = [self.H_local2world[:3, :3] @ n for n in self._normals]
+        self.world_face_bounding_boxes = np.array([(self.H_local2world @ np.array([*v, 1]))[:3] for v in self.face_bounding_boxes])
